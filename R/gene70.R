@@ -22,7 +22,9 @@ function(data, annot, do.mapping=FALSE, mapping, std=c("none", "scale", "robust"
 			res <- rep(NA, nrow(data))
 			names(res) <- dimnames(data)[[1]]
 			gf <- c("mapped"=0, "total"=gt)
-			if(verbose) { message(sprintf("probe candidates: 0/%i", gt)) }
+			warning(sprintf("Probe candidates: %i/%i", gm, gt),
+				"\nIncomplete overlap between the gene signature EntrezGene.IDs",
+				" and the EntrezGene.ID column of annot... Returning all NAs.")
 			return(list("score"=res, "risk"=res, "mapping"=gf, "probe"=NA))
 		}
 		gid1 <- rr$geneid2
@@ -41,8 +43,15 @@ function(data, annot, do.mapping=FALSE, mapping, std=c("none", "scale", "robust"
 		myprobe <- NA
 	}
 
-	if(verbose && gm != gt) { message(sprintf("%i/%i probes are used to compute the score", gm, gt)) }
-	
+	if(verbose && gm != gt)
+		message(sprintf("%i/%i probes are used to compute the score",
+			gm, gt))
+
+	if (ncol(data) < 1) {
+		warning("No overalp between the gene signature EntrezGene.IDs",
+			"and the colnames of your data... Returning all NAs.")
+		return(list("score"=res, "risk"=res, "mapping"=gf, "probe"=NA))
+	}
 	## scaling
 	switch(std,
 	"scale"={

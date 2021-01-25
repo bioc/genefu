@@ -3,8 +3,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables("sig.endoPredict")
 `endoPredict` <-
 function(data, annot, do.mapping=FALSE, mapping, verbose=FALSE) {
 
-	## the reference genes are not taken into account due to their absence from most platforms
-  #sig2 <- sig.endoPredict
+  ## the reference genes are not taken into account due to their absence from most platforms
   sig2 <- sig.endoPredict[sig.endoPredict[ , "group"] != "REFERENCE", , drop=FALSE]
 	rownames(sig2) <- sig2[ , "probe.affy"]
 	gt <- nrow(sig2)
@@ -18,12 +17,14 @@ function(data, annot, do.mapping=FALSE, mapping, verbose=FALSE) {
 		gid1 <- gid1[!rm.ix]
 		## mqpping
 		rr <- geneid.map(geneid1=gid2, data1=data, geneid2=gid1, verbose=FALSE)
-		gm <- length(rr$geneid2)
+		gm <- length(rr$geneid2[!is.na(rr$geneid2)])
 		mymapping <- c("mapped"=gm, "total"=gt)
 		if(!all(is.element(sig2[sig2[ , "group"] == "GOI", "EntrezGene.ID"], rr$geneid1))) { ## if genes of interest are missing
 			res <- rep(NA, nrow(data))
 			names(res) <- dimnames(data)[[1]]
-			if(verbose) { message(sprintf("probe candidates: %i/%i", gm, gt)) }
+			warning(sprintf("Probe candidates: %i/%i", gm, gt),
+				"\nIncomplete overlap between the gene signature EntrezGene.IDs",
+				" and the EntrezGene.ID column of annot... Returning all NAs.")
 			return(list("score"=res, "risk"=res, "mapping"=mymapping, "probe"=NA))
 		}
 		gid1 <- rr$geneid2
@@ -37,11 +38,18 @@ function(data, annot, do.mapping=FALSE, mapping, verbose=FALSE) {
 		mymapping <- c("mapped"=gm, "total"=gt)
 	} else {
 		myprobe <- NA
-    nn <- intersect(dimnames(sig2)[[1]], dimnames(data)[[2]])
+    	nn <- intersect(dimnames(sig2)[[1]], dimnames(data)[[2]])
 		data <- data[ , nn]
-    sig2 <- sig2[nn, , drop=FALSE]
+    	sig2 <- sig2[nn, , drop=FALSE]
 		gm <- ncol(data)
 		mymapping <- c("mapped"=gm, "total"=gt)
+		if (length(nn) < 1) {
+			res <- rep(NA, nrow(data))
+			names(res) <- dimnames(data)[[1]]
+			warning("No overalp between the gene signature EntrezGene.IDs",
+				"and the colnames of your data... Returning all NAs.")
+			return(list("score"=res, "risk"=res, "mapping"=mymapping, "probe"=NA))
+		}
 	}
 	## rename gene names by the gene symbols
 	colnames(data) <- rownames(sig2) <- sig2[ , "symbol"]

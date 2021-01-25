@@ -22,7 +22,9 @@ function(data, annot, do.mapping=FALSE, mapping, verbose=FALSE) {
 		if(length(rr$geneid1) != gt) { ## some genes are missing
 			res <- rep(NA, nrow(data))
 			names(res) <- dimnames(data)[[1]]
-			if(verbose) { message(sprintf("probe candidates: %i/%i", gm, gt)) }
+			warning(sprintf("Probe candidates: %i/%i", gm, gt),
+				"\nIncomplete overlap between the gene signature EntrezGene.IDs",
+				" and the EntrezGene.ID column of annot... Returning all NAs.")
 			return(list("score"=res, "risk"=res, "mapping"=mymapping, "probe"=NA))
 		}
 		gid1 <- rr$geneid2
@@ -39,7 +41,9 @@ function(data, annot, do.mapping=FALSE, mapping, verbose=FALSE) {
 		if(nrow(sig2) != ncol(data)) { ## some genes are missing
 			res <- rep(NA, nrow(data))
 			names(res) <- dimnames(data)[[1]]
-			if(verbose) { message(sprintf("probe candidates: %i/%i", ncol(data), gt)) }
+			warning(sprintf("Probe candidates: %i/%i", gm, gt),
+				"\nIncomplete overlap between the gene signature EntrezGene.IDs",
+				" and the colnames of data... Returning all NAs.")
 			return(list("score"=res, "risk"=res, "mapping"=mymapping, "probe"=myprobe))
 		}
 	}
